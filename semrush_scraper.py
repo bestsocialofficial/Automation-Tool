@@ -13,16 +13,16 @@ email = os.getenv("SEMRUSH_EMAIL")
 password = os.getenv("SEMRUSH_PASSWORD")
 
 # We can now use a list of keywords!
-KEYWORDS_TO_CHECK = ["gaming laptops"] 
-TARGET_DOMAIN = "dell.com"  # Change this to the website you want to track
+KEYWORDS_TO_CHECK = ["gaming laptops", "gaming mouse"] 
+TARGET_DOMAIN = "amazon.in"  # Change this to the website you want to track
 
 # =====================================================================
 # EXTRACTION FUNCTION (Volume + Rank)
 # =====================================================================
 def get_seo_data(page, keyword, target_domain):
     """
-    Takes an already logged-in browser page, navigates to the keyword overview,
-    and extracts both Search Volume and Domain Rank in one go.
+    Combines search volume extraction and domain ranking extraction 
+    into a single page load to maximize efficiency.
     """
     print(f"\n--- Fetching full SEO profile for: '{keyword}' ---")
     encoded_kw = urllib.parse.quote_plus(keyword)
@@ -31,7 +31,9 @@ def get_seo_data(page, keyword, target_domain):
     try:
         page.goto(target_url, wait_until="load")
         
+        # ----------------------------------------------------
         # 1. GET SEARCH VOLUME
+        # ----------------------------------------------------
         print("Extracting Search Volume...")
         page.wait_for_selector("span.kwo-widget-total", timeout=20000)
         time.sleep(2)
@@ -40,24 +42,37 @@ def get_seo_data(page, keyword, target_domain):
         volume_span = soup.find("span", class_="kwo-widget-total")
         volume = volume_span.text.strip() if volume_span else "N/A"
         
-        # 2. GET RANK
+       # ----------------------------------------------------
+        # 2. GET RANK (Using stable data-testid attributes)
+        # ----------------------------------------------------
         print(f"Extracting Rank for {target_domain}...")
-        page.evaluate("window.scrollBy(0, 1500)") # Scroll down to load SERP table
-        time.sleep(3) 
+        page.evaluate("window.scrollBy(0, 2500)") 
+        time.sleep(4) 
         
         rank = "Not found in top results"
         try:
-            page.wait_for_selector("a.serp-item__link", timeout=10000)
-            soup = BeautifulSoup(page.content(), "html.parser")
-            serp_links = soup.find_all("a", class_="serp-item__link")
+            # Wait for Semrush's internal row testing ID to appear
+            page.wait_for_selector('div[data-testid="serp-analysis-row"]', timeout=15000)
             
-            for index, link in enumerate(serp_links, start=1):
-                url = link.get('href', '')
-                if target_domain in url:
-                    rank = f"Rank #{index} (URL: {url})"
-                    break
+            soup = BeautifulSoup(page.content(), "html.parser")
+            
+            # Grab all the rows in the table
+            rows = soup.find_all("div", attrs={"data-testid": "serp-analysis-row"}) 
+            
+            # Loop through each row and check the URL
+            for index, row in enumerate(rows):
+                # Find the specific outbound link tag
+                link_tag = row.find("a", attrs={"data-path": "overview.serp_widget.table.url_cell.page_link"})
+                
+                if link_tag:
+                    url = link_tag.get("href", "")
+                    # If amazon.in (or whatever target) is in the URL, grab the rank!
+                    if target_domain in url:
+                        rank = f"Rank #{index}"
+                        break
+                        
         except Exception as e:
-            rank = "SERP Table failed to load"
+            rank = "SERP Table restricted or failed to load"
 
         return {
             "keyword": keyword,
@@ -73,7 +88,6 @@ def get_seo_data(page, keyword, target_domain):
             "rank": None,
             "status": f"Automation Failed: {str(e)}"
         }
-
 # =====================================================================
 # MAIN EXECUTION (Login + Loop)
 # =====================================================================
@@ -92,7 +106,7 @@ if __name__ == "__main__":
         try:
             # --- STEP 1: LOGIN ONLY ONCE ---
             print("Navigating to Semrush Login...")
-            page.goto("https://www.semrush.com/login/", wait_until="domcontentloaded")
+            page.goto("https://www.semrush.com/login/", wait_until="networkidle")
             time.sleep(2)
             
             print("Checking for cookie pop-ups...")
