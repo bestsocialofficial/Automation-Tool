@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keyword Ranking Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-left">
+      <h1>Keyword Ranking Dashboard</h1>
+      <div class="meta-line">
+        <span id="market-badge" class="badge hidden"></span>
+        <span class="meta">Source: SEMrush</span>
+        <span class="meta" id="last-updated"></span>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <label for="domain-select" class="meta">Domain</label>
+      <select id="domain-select"></select>
+      <button id="btn-excel" class="btn" title="Download the keyword table as an Excel file">Download Excel</button>
+      <button id="btn-print" class="btn" title="Print the report or save it as a PDF">Print / PDF</button>
+      <span id="user-chip" class="meta"></span>
+      <button id="btn-logout" class="btn subtle">Log out</button>
+    </div>
+  </header>
+
+  <main id="app" class="hidden">
+    <!-- KPI cards -->
+    <section class="kpi-grid" id="kpi-grid"></section>
+
+    <!-- Trend charts -->
+    <section class="row">
+      <div class="card chart-card">
+        <h2>Average position over time</h2>
+        <div class="chart-wrap"><canvas id="chart-avg"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h2>Keywords in top 10</h2>
+        <div class="chart-wrap"><canvas id="chart-top10"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Winners / losers -->
+    <section class="row">
+      <div class="card half">
+        <h2>Biggest improvements</h2>
+        <ul id="winners" class="movers"></ul>
+      </div>
+      <div class="card half">
+        <h2>Biggest declines</h2>
+        <ul id="losers" class="movers"></ul>
+      </div>
+    </section>
+
+    <!-- Distributions -->
+    <section class="row">
+      <div class="card chart-card">
+        <h2>Position distribution</h2>
+        <div class="chart-wrap"><canvas id="chart-buckets"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h2>Search intent</h2>
+        <div class="chart-wrap donut-wrap"><canvas id="chart-intents"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Keyword table -->
+    <section class="card">
+      <div class="table-header">
+        <h2>Keywords</h2>
+        <div class="table-controls">
+          <input type="search" id="kw-search" placeholder="Search keywords..." />
+          <select id="intent-filter"><option value="">All intents</option></select>
+          <select id="bucket-filter"><option value="">All positions</option></select>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table id="kw-table">
+          <thead>
+            <tr>
+              <th data-sort="keyword">Keyword</th>
+              <th data-sort="position" class="num">Position</th>
+              <th data-sort="change" class="num">Change</th>
+              <th data-sort="search_volume" class="num">Volume</th>
+              <th data-sort="traffic" class="num" title="Share of the site's organic traffic from this keyword">Traffic&nbsp;%</th>
+              <th data-sort="keyword_difficulty" class="num">KD</th>
+              <th data-sort="search_intent">Intent</th>
+              <th data-sort="vi" class="num" title="Estimated visibility (CTR-based)">Est.&nbsp;Vi</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="footnote">Traffic % = share of the site's total organic traffic. Est. Vi = estimated visibility from position (CTR-based). Click a row for position history.</p>
+    </section>
+  </main>
+
+  <div id="empty-state" class="empty hidden">
+    <h2>No ranking data yet</h2>
+    <p>Run the scraper first, then refresh this page:</p>
+    <code>python semrush_scraper.py --domain yourclient.com --keyword "your keyword"</code>
+  </div>
+
+  <!-- Keyword history modal -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h2 id="modal-title"></h2>
+        <button id="modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="chart-wrap"><canvas id="chart-history"></canvas></div>
+    </div>
+  </div>
+
+  <script src="/static/chart.umd.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

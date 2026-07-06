@@ -1,0 +1,16 @@
+# Secrets — never commit
+keyword-ranking-dashboard/.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Local data
+keyword-ranking-dashboard/results.json
+keyword-ranking-dashboard/results_fallback.json
+*.xlsx
+
+# Editor / local settings
+.vscode/
+.claude/
